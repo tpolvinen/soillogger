@@ -1,0 +1,51 @@
+struct MyMessage{
+  char a[32];
+  int b;
+  int c;
+  float d;
+  int e;
+  int f;
+  char g[32];
+};
+
+char data[] = "a=this is a test,b=111,c=222,d=322.1,e=456,f=777,g=Hello World";
+MyMessage myMessage;
+
+void setup()
+{
+  Serial.begin(9600);
+  decodeMessage(data);
+  Serial.println(myMessage.a);
+  Serial.println(myMessage.b);
+  Serial.println(myMessage.c);
+  Serial.println(myMessage.d);
+  Serial.println(myMessage.e);
+  Serial.println(myMessage.f);
+  Serial.println(myMessage.g);
+}
+
+void loop()
+{
+ 
+}
+
+void decodeMessage(char* messg)
+{
+  char buffer[64] = "";
+  strcpy(buffer, messg);
+  strtok(buffer, "=");
+  strcpy(myMessage.a, strtok(NULL, ",="));
+  strtok(NULL, "=");
+  myMessage.b = atoi(strtok(NULL, ",="));
+  strtok(NULL, "=");
+  myMessage.c = atoi(strtok(NULL, ",="));
+  strtok(NULL, "=");
+  myMessage.d = atof(strtok(NULL, ",="));
+  strtok(NULL, "=");
+  myMessage.e = atoi(strtok(NULL, ",="));
+  strtok(NULL, "=");
+  myMessage.f = atoi(strtok(NULL, ",="));
+  strtok(NULL, "=");
+  strcpy(myMessage.g, strtok(NULL, ",="));
+}
+

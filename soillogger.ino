@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <string.h>
 
 //------------------------------------------------------------------------------
 #include <SDISerial.h>
@@ -27,12 +29,41 @@ byte Skull[] = {
 
 //------------------------------------------------------------------------------
 
+void drawProgressBar(){
+  if (progressIndicator > 19) {
+    progressIndicator = 0;
+    lcd.setCursor(0,0);
+    lcd.print("____________________");
+    }
+  lcd.setCursor(progressIndicator,0);
+  lcd.write(byte(0));
+  progressIndicator++;
+}
+
+//------------------------------------------------------------------------------
+
 char* get_measurement(){
   char* service_request = sdi_serial_connection.sdi_query("?M!10013",1000);
   // the time  above is to wait for service_request_complete
   char* service_request_complete = sdi_serial_connection.wait_for_response(1000);
   // will return once it gets a response
   return sdi_serial_connection.sdi_query("?D0!",1000);
+}
+
+//------------------------------------------------------------------------------
+
+void processString(char* str){
+  lcd.setCursor(0,1);
+  char * pch;
+  pch = strtok (str,"+-");
+  while (pch != NULL){
+    Serial.print(pch);
+    lcd.print(pch);
+    lcd.print(" ");
+    Serial.print(",");
+    pch = strtok (NULL, "+-");
+  }
+  Serial.println();
 }
 
 //------------------------------------------------------------------------------
@@ -55,19 +86,11 @@ void loop(){
   uint8_t wait_for_response_ms = 1000;
   char* response = get_measurement(); // get measurement data
   
-  Serial.print("RECV:");
-  Serial.println(response!=NULL&&response[0] != '\0'?response:"No Response!");
+  processString(response);
 
-  lcd.setCursor(0,1);
-  lcd.print(response);
-  if (progressIndicator > 19) {
-    progressIndicator = 0;
-    lcd.setCursor(0,0);
-    lcd.print("____________________");
-    }
-  lcd.setCursor(progressIndicator,0);
-  lcd.write(byte(0));
-  progressIndicator++;
-
+  drawProgressBar();
+  
   delay(500);
 }
+
+//------------------------------------------------------------------------------
