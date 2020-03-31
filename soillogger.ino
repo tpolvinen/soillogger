@@ -2,6 +2,14 @@
 #include <string.h>
 
 //------------------------------------------------------------------------------
+#include "RTClib.h"
+
+RTC_PCF8523 rtc;
+char dateAndTimeData[20]; // space for YYYY-MM-DDTHH-MM-SS, plus the null char terminator
+uint16_t thisYear;
+int8_t thisMonth, thisDay, thisHour, thisMinute, thisSecond;
+
+//------------------------------------------------------------------------------
 #include <SDISerial.h>
 
 #define DATALINE_PIN 2  //choose a pin that supports interupts
@@ -62,6 +70,33 @@ void skullduggery() {
 
 //------------------------------------------------------------------------------
 
+void getDateAndTime() {
+
+  DateTime now = rtc.now();
+
+  thisYear = now.year();
+  thisMonth = now.month();
+  thisDay = now.day();
+  thisHour = now.hour();
+  thisMinute = now.minute();
+  thisSecond = now.second();
+
+  sprintf(dateAndTimeData, ("%04d-%02d-%02dT%02d:%02d:%02d"), thisYear, thisMonth, thisDay, thisHour, thisMinute, thisSecond);
+
+}
+
+//------------------------------------------------------------------------------
+
+void printDateAndTime() {
+  Serial.print(dateAndTimeData);
+  Serial.print(",");
+  lcd.setCursor(0,2);
+  lcd.print(dateAndTimeData); 
+
+}
+
+//------------------------------------------------------------------------------
+
 char* get_measurement() {
   char* service_request = sdi_serial_connection.sdi_query("?M!10013", 1000);
   // the time  above is to wait for service_request_complete
@@ -72,7 +107,7 @@ char* get_measurement() {
 
 //------------------------------------------------------------------------------
 
-void processString(char* str) {
+void processMeasurement(char* str) {
   lcd.setCursor(0, 1);
   char * pch;
   pch = strtok (str, "+-");
@@ -93,25 +128,48 @@ void setup() {
   lcd.createChar(0, Skull);
   sdi_serial_connection.begin();
   Serial.begin(9600);
+
+  if (! rtc.begin()) {
+    Serial.println("Couldn't find RTC");
+    while (1);
+  }
+  
+  if (! rtc.initialized()) {
+    Serial.println("RTC is NOT running!");
+    // following line sets the RTC to the date & time this sketch was compiled
+    // rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
+    // This line sets the RTC with an explicit date & time, for example to set
+    // January 21, 2014 at 3am you would call:
+    // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
+  }
+  
   lcd.print("OK INITIALIZED");
   Serial.println("OK INITIALIZED");
   delay(3000); // startup delay to allow sensor to powerup and output its DDI serial string
   lcd.clear();
   lcd.print("____________________");
+
+  getDateAndTime();
+
+  printDateAndTime();
 }
 
 //------------------------------------------------------------------------------
 
 void loop() {
-  uint8_t wait_for_response_ms = 1000;
+//  uint8_t wait_for_response_ms = 1000;
+
+  getDateAndTime();
+  
   char* response = get_measurement(); // get measurement data
 
-  processString(response);
+  printDateAndTime();
+
+  processMeasurement(response);
 
   drawProgressBar();
 
   skullduggery();
-
 }
 
 //------------------------------------------------------------------------------
