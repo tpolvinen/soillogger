@@ -29,34 +29,54 @@ byte Skull[] = {
 
 //------------------------------------------------------------------------------
 
-void drawProgressBar(){
+void drawProgressBar() {
   if (progressIndicator > 19) {
     progressIndicator = 0;
-    lcd.setCursor(0,0);
+    lcd.setCursor(0, 0);
     lcd.print("____________________");
-    }
-  lcd.setCursor(progressIndicator,0);
+  }
+  lcd.setCursor(progressIndicator, 0);
   lcd.write(byte(0));
   progressIndicator++;
 }
 
 //------------------------------------------------------------------------------
 
-char* get_measurement(){
-  char* service_request = sdi_serial_connection.sdi_query("?M!10013",1000);
-  // the time  above is to wait for service_request_complete
-  char* service_request_complete = sdi_serial_connection.wait_for_response(1000);
-  // will return once it gets a response
-  return sdi_serial_connection.sdi_query("?D0!",1000);
+void skullduggery() {
+
+  for (int position = 6; position < 15; position++) {
+    lcd.setCursor(position - 1, 3);
+    lcd.print(" ");
+    lcd.setCursor(position, 3);
+    lcd.write(byte(0));
+    delay(50);
+  }
+  for (int position = 14; position > 4; position--) {
+    lcd.setCursor(position + 1, 3);
+    lcd.print(" ");
+    lcd.setCursor(position, 3);
+    lcd.write(byte(0));
+    delay(50);
+  }
 }
 
 //------------------------------------------------------------------------------
 
-void processString(char* str){
-  lcd.setCursor(0,1);
+char* get_measurement() {
+  char* service_request = sdi_serial_connection.sdi_query("?M!10013", 1000);
+  // the time  above is to wait for service_request_complete
+  char* service_request_complete = sdi_serial_connection.wait_for_response(1000);
+  // will return once it gets a response
+  return sdi_serial_connection.sdi_query("?D0!", 1000);
+}
+
+//------------------------------------------------------------------------------
+
+void processString(char* str) {
+  lcd.setCursor(0, 1);
   char * pch;
-  pch = strtok (str,"+-");
-  while (pch != NULL){
+  pch = strtok (str, "+-");
+  while (pch != NULL) {
     Serial.print(pch);
     lcd.print(pch);
     lcd.print(" ");
@@ -68,10 +88,10 @@ void processString(char* str){
 
 //------------------------------------------------------------------------------
 
-void setup(){
+void setup() {
   lcd.begin(20, 4);
   lcd.createChar(0, Skull);
-  sdi_serial_connection.begin(); 
+  sdi_serial_connection.begin();
   Serial.begin(9600);
   lcd.print("OK INITIALIZED");
   Serial.println("OK INITIALIZED");
@@ -82,15 +102,16 @@ void setup(){
 
 //------------------------------------------------------------------------------
 
-void loop(){
+void loop() {
   uint8_t wait_for_response_ms = 1000;
   char* response = get_measurement(); // get measurement data
-  
+
   processString(response);
 
   drawProgressBar();
-  
-  delay(500);
+
+  skullduggery();
+
 }
 
 //------------------------------------------------------------------------------
